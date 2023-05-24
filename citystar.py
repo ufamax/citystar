@@ -173,7 +173,7 @@ def predict_price():
     return jsonify(data)
 
 
-app.run(debug=True, host='localhost', port=52111)
+app.run(debug=True, host='0.0.0.0', port=52114)
 
 # # тестовый локальный запуск
 # print('Верный ответ:', 2850)
