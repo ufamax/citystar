@@ -143,7 +143,7 @@ def main():
     tokenizer = load_obj('data/comment')
 
     # загрузим модель
-    model = load_model('model1.h5', compile=True)
+    model = load_model('data/model1.h5', compile=True)
 
     # тестовый локальный запуск
     print('Верный ответ:', 2850)
