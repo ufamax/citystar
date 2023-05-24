@@ -149,7 +149,7 @@ app = Flask(__name__)
 @app.route('/predict_price', methods=['GET'])
 def predict_price():
     # сформируем ответ
-    data = {'status': 'error'} # по умолчанию ошибка
+    data = {'status': 'error', 'price': '0'} # по умолчанию ошибка
     try:
         district = request.args.get('district', default='', type=str)
         street = request.args.get('street', default='', type=str)
@@ -164,6 +164,7 @@ def predict_price():
         price = get_price(model, district, street, house_floor, planning, rooms, area1, area2, comment)
         data['price'] = price  # вернем цену
         data['status'] = 'ok'  # говорим что все ок
+
     except:
         data['price'] = '0'  # вернем '0'
         data['status'] = 'error'  # ошибка
