@@ -148,20 +148,25 @@ app = Flask(__name__)
 
 @app.route('/predict_price', methods=['GET'])
 def predict_price():
-    data = {'status': 'error'}  # по умолчанию ошибка
-    district = request.args.get('district', default='', type=str)
-    street = request.args.get('street', default='', type=str)
-    house_floor = request.args.get('house_floor', default='', type=str)
-    planning = request.args.get('planning', default='', type=str)
-    rooms = request.args.get('rooms', default='', type=str)
-    area1 = request.args.get('area1', default='', type=str)
-    area2 = request.args.get('area2', default='', type=str)
-    comment = request.args.get('comment', default='', type=str)
+    # сформируем ответ
+    data = {'status': 'error'} # по умолчанию ошибка
+    try:
+        district = request.args.get('district', default='', type=str)
+        street = request.args.get('street', default='', type=str)
+        house_floor = request.args.get('house_floor', default='', type=str)
+        planning = request.args.get('planning', default='', type=str)
+        rooms = request.args.get('rooms', default='', type=str)
+        area1 = request.args.get('area1', default='', type=str)
+        area2 = request.args.get('area2', default='', type=str)
+        comment = request.args.get('comment', default='', type=str)
 
-    # делаем прогноз
-    price = get_price(model, district, street, house_floor, planning, rooms, area1, area2, comment)
-    data['price'] = price  # вернем цену
-    data['status'] = 'ok'  # говорим что все ок
+        # делаем прогноз
+        price = get_price(model, district, street, house_floor, planning, rooms, area1, area2, comment)
+        data['price'] = price  # вернем цену
+        data['status'] = 'ok'  # говорим что все ок
+    except:
+        data['price'] = '0'  # вернем '0'
+        data['status'] = 'error'  # ошибка
 
     print(data)
     return jsonify(data)
