@@ -132,15 +132,15 @@ def main():
     global district, street, house_floor, planning, rooms, area1, area2, price, tokenizer
 
     # загрузим енкодеры
-    district = load_obj('district')
-    street = load_obj('street')
-    house_floor = load_obj('house_floor')
-    planning = load_obj('planning')
-    rooms = load_obj('rooms')
-    area1 = load_obj('area1')
-    area2 = load_obj('area2')
-    price = load_obj('price')
-    tokenizer = load_obj('comment')
+    district = load_obj('data/district')
+    street = load_obj('data/street')
+    house_floor = load_obj('data/house_floor')
+    planning = load_obj('data/planning')
+    rooms = load_obj('data/rooms')
+    area1 = load_obj('data/area1')
+    area2 = load_obj('data/area2')
+    price = load_obj('data/price')
+    tokenizer = load_obj('data/comment')
 
     # загрузим модель
     model = load_model('model1.h5', compile=True)
