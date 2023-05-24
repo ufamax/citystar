@@ -1,3 +1,4 @@
+from flask import Flask, jsonify, request
 import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import to_categorical
@@ -10,7 +11,7 @@ def load_obj(filename):
         return pickle.load(f)  # loading
 
 
-########## категориальные данные ############
+# категориальные данные
 
 # функция преобразования района в формат для подачи в нейронку
 def pack_district(d):
@@ -57,7 +58,7 @@ def pack_rooms(d):
     return list(l)  # возвращаем в виде списка в формате One-Hot Encoding
 
 
-########## числовые данные ############
+# числовые данные
 
 # функция преобразования area1 в формат для подачи в нейронку
 def pack_area1(d):
@@ -89,7 +90,7 @@ def pack_price(d):
     return r  # возвращаем в виде числа float
 
 
-########## текстовые данные ############
+# текстовые данные
 
 # функция преобразования текста в вектор Bag-of-Words
 def pack_comment(d):
@@ -127,47 +128,66 @@ def get_price(model, district, street, house_floor, planning, rooms, area1, area
     return str(round(predUnscaled[0], 0))  # вернем окргулив в формате str
 
 
-def main():
-    # сделаем глобальными все енкодеры
-    global district, street, house_floor, planning, rooms, area1, area2, price, tokenizer
+# загрузим енкодеры
+district = load_obj('data/district')
+street = load_obj('data/street')
+house_floor = load_obj('data/house_floor')
+planning = load_obj('data/planning')
+rooms = load_obj('data/rooms')
+area1 = load_obj('data/area1')
+area2 = load_obj('data/area2')
+price = load_obj('data/price')
+tokenizer = load_obj('data/comment')
 
-    # загрузим енкодеры
-    district = load_obj('data/district')
-    street = load_obj('data/street')
-    house_floor = load_obj('data/house_floor')
-    planning = load_obj('data/planning')
-    rooms = load_obj('data/rooms')
-    area1 = load_obj('data/area1')
-    area2 = load_obj('data/area2')
-    price = load_obj('data/price')
-    tokenizer = load_obj('data/comment')
+# загрузим модель
+model = load_model('data/model1.h5', compile=True)
 
-    # загрузим модель
-    model = load_model('data/model1.h5', compile=True)
-
-    # тестовый локальный запуск
-    print('Верный ответ:', 2850)
-    print('Прогноз:', get_price(model, 'Ленинский', 'Куйбышева', '1', 'раздельная', '3', '57', '35',
-                                'Трехкомнатная квартира нестандартной планировки (третья комната с отдельным входом) '
-                                'в нормальном состоянии, санузел раздельный, трубы пластиковые, водомеры. Первый '
-                                'этаж, высоко. В центре Ленинского района. Есть все: садики, школы, скверы и парки, '
-                                'магазины, поликлиника. Очень тихое, спокойное место.'))
-    print('Верный ответ:', '6990')
-    print('Прогноз:',
-          get_price(model, 'Орджоникидзевский', '50-летия Магнитки', '3', 'нестандартная', '3', '98.5', '60',
-                    'Продам трехкомнатную квартиру 100кв.м. Просторная,светлая,уютная- встроенные удобные '
-                    'гардеробные, два больших балкона, кондиционер, водонагреватель, раздельный санузел, '
-                    'видео- звонок. Во дворе дома детский сад и школа. Остается мебель и кухонный гарнитур. В '
-                    'собственности более 5 лет. Долгов и обременений нет.Один собственник.'))
-    print('Верный ответ:', '5100')
-    print('Прогноз:', get_price(model, 'Ленинский', 'Менделеева', '3', 'старой планировки', '3', '83', '55',
-                                'ПРОДАМ трехкомнатную квартиру старой планировки в хорошем состоянии, раздельная. вся '
-                                'инфраструктура рядом. квартира в хорошем состоянии, пл.окна, водомеры, '
-                                'заменена эл.проводка, стены выровнены, натяжной потолок, м/двери, ламинат. с/у разд. '
-                                'в кафеле, душ.кабина, остается кухонный гарнитур, прихожая, холодильник, '
-                                'два кондиционера, стиральная машина. б/з. или ОБМЕНЯЮ на двухкомнатную квартиру '
-                                'старой планировки в Ленинском районе + ваша доплата. рассмотрю варианты'))
+# создаем наше веб-приложение
+app = Flask(__name__)
 
 
-if __name__ == '__main__':
-    main()
+@app.route('/predict_price', methods=['GET'])
+def predict_price():
+    data = {'status': 'error'}  # по умолчанию ошибка
+    district = request.args.get('district', default='', type=str)
+    street = request.args.get('street', default='', type=str)
+    house_floor = request.args.get('house_floor', default='', type=str)
+    planning = request.args.get('planning', default='', type=str)
+    rooms = request.args.get('rooms', default='', type=str)
+    area1 = request.args.get('area1', default='', type=str)
+    area2 = request.args.get('area2', default='', type=str)
+    comment = request.args.get('comment', default='', type=str)
+
+    # делаем прогноз
+    price = get_price(model, district, street, house_floor, planning, rooms, area1, area2, comment)
+    data['price'] = price  # вернем цену
+    data['status'] = 'ok'  # говорим что все ок
+
+    print(data)
+    return jsonify(data)
+
+
+app.run(debug=True, host='localhost', port=52111)
+
+# # тестовый локальный запуск
+# print('Верный ответ:', 2850)
+# print('Прогноз:', get_price(model, 'Ленинский', 'Куйбышева', '1', 'раздельная', '3', '57', '35',
+#                             'Трехкомнатная квартира нестандартной планировки (третья комната с отдельным входом) '
+#                             'в нормальном состоянии, санузел раздельный, трубы пластиковые, водомеры. Первый '
+#                             'этаж, высоко. В центре Ленинского района. Есть все: садики, школы, скверы и парки, '
+#                             'магазины, поликлиника. Очень тихое, спокойное место.'))
+# print('Верный ответ:', '6990')
+# print('Прогноз:',
+#       get_price(model, 'Орджоникидзевский', '50-летия Магнитки', '3', 'нестандартная', '3', '98.5', '60',
+#                 'Продам трехкомнатную квартиру 100кв.м. Просторная,светлая,уютная- встроенные удобные '
+#                 'гардеробные, два больших балкона, кондиционер, водонагреватель, раздельный санузел, '
+#                 'видео- звонок. Во дворе дома детский сад и школа. Остается мебель и кухонный гарнитур. В '
+#                 'собственности более 5 лет. Долгов и обременений нет.Один собственник.'))
+# print('Верный ответ:', '5100')
+# print('Прогноз:', get_price(model, 'Ленинский', 'Менделеева', '3', 'старой планировки', '3', '83', '55',
+#                             'ПРОДАМ трехкомнатную квартиру старой планировки в хорошем состоянии, раздельная. вся '
+#                             'инфраструктура рядом. квартира в хорошем состоянии, пл.окна, водомеры, '
+#                             'заменена эл.проводка, стены выровнены, натяжной потолок, м/двери, ламинат. с/у разд. '
+#                             'в кафеле, душ.кабина, остается кухонный гарнитур, прихожая, холодильник, '
+#                             'два кондиционера, стиральная машина. б/з. или ОБМЕНЯЮ на двухкомнатную квартиру '
+#                             'старой планировки в Ленинском районе + ваша доплата. рассмотрю варианты'))
